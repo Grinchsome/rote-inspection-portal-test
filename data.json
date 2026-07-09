@@ -39,8 +39,6 @@
     "Stage Track STA",
     "Stage Track STB",
     "Stage Track STC",
-    "Mole-Richardson curtain track",
-    "Mole-Richardson overlap curtain track",
     "Curtain track",
     "Swivel leg bar",
     "Projector Bracket",
@@ -61,7 +59,6 @@
     "Lifting Beam Trolley",
     "Non-categorised Mechanical Production Equipment",
     "Lifting Stand",
-    "Lighting Stand",
     "Boom Arm",
     "Other"
   ],

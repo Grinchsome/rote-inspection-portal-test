@@ -10,6 +10,48 @@ function _asList(v){
 const $=(id)=>document.getElementById(id);
 let data={meta:{customer:"",site:"",space:"",inspectionDate:"",reportOutcome:""},records:[]};
 let editIndex = null;
+
+let assetTypeOptions = [];
+function setupAssetTypeFilter(items){
+  assetTypeOptions = (items||[]).filter(Boolean);
+  const input = $('assetTypeInput');
+  const box = $('assetTypeSuggest');
+  if(!input || !box) return;
+
+  const show = () => {
+    const q = (input.value||'').toLowerCase().trim();
+    let matches = assetTypeOptions;
+    if(q){
+      matches = assetTypeOptions.filter(x => x.toLowerCase().includes(q));
+    }
+    matches = matches.slice(0, 40);
+    if(!matches.length){
+      box.classList.add('hidden');
+      box.innerHTML = '';
+      return;
+    }
+    box.innerHTML = matches.map(x => `<div class="suggestItem" data-val="${escapeHtml(x)}">${escapeHtml(x)}</div>`).join('');
+    box.classList.remove('hidden');
+    box.querySelectorAll('.suggestItem').forEach(item => {
+      const choose = (ev) => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        input.value = item.getAttribute('data-val') || '';
+        box.classList.add('hidden');
+        box.innerHTML = '';
+        input.blur();
+      };
+      item.addEventListener('click', choose);
+      item.addEventListener('touchstart', choose, {passive:false});
+    });
+  };
+
+  input.addEventListener('input', show);
+  input.addEventListener('focus', show);
+  input.addEventListener('click', show);
+  input.addEventListener('blur', () => setTimeout(() => box.classList.add('hidden'), 220));
+}
+
 const escapeHtml=(s)=>String(s||"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
 const idKey=(v)=>{const m=String(v||"").match(/(\d+)/);return m?parseInt(m[1],10):1e12;};
 const selectedMulti=(sel)=>Array.from(sel.selectedOptions).map(o=>o.value);
@@ -67,7 +109,7 @@ function setDesignationValue(value, note){
 }
 function clearForm(){['assetId','assetDesignation','assetDesignationOther','customerAssetId','typeNotes','loadInfo','advNotes','failOther','failNotes','limDetails','limNotes','thisInspection','assetTypeInput'].forEach(id=>{const el=$(id); if(el) el.value='';});
 ['cPass','cFail','cAdv','cLim','chkGenericPhotos','chkFixingsPhotos','chkObsPhotos','chkRemedial','chkGenericPhotosF','chkFixingsPhotosF','chkObsPhotosF','chkRemedialF','chkLimDetails','chkLimPhotos'].forEach(id=>{const el=$(id); if(el) el.checked=false;});
-if($('advActions')) $('advActions').selectedIndex=-1;if($('failDefects')) $('failDefects').selectedIndex=-1;if($('failOtherWrap')) $('failOtherWrap').classList.add('hidden');if($('assetTypeInput')) $('assetTypeInput').value='';
+if($('advActions')) $('advActions').selectedIndex=-1;if($('failDefects')) $('failDefects').selectedIndex=-1;if($('failOtherWrap')) $('failOtherWrap').classList.add('hidden');if($('assetTypeInput')) $('assetTypeInput').value='';if($('assetTypeSuggest')) $('assetTypeSuggest').classList.add('hidden');
 showBlocks();$('addMsg').textContent="";}
 function sortAssets(){data.records.sort((a,b)=>idKey(a.assetId)-idKey(b.assetId));}
 function renumber(){data.records.forEach((r,i)=>r.assetNo=i+1);}
@@ -268,8 +310,8 @@ w.document.write(`<html><head><meta name="viewport" content="width=device-width,
 <div class="meta">Site: ${escapeHtml(m.site||"")}<br/>Space: ${escapeHtml(m.space||"")}${m.inspectionDate?("<br/>Report: "+escapeHtml(m.inspectionDate)):""}</div>${lines}
 <script>window.focus();</script></body></html>`);w.document.close();}
 async function init(){
-const cfg=await fetch('./data.json?v=273', {cache:'no-store'}).then(r=>r.json());
-fillDatalist($('assetTypeList'),cfg.assetTypes||[]);fillSelect($('advActions'),cfg.advisoryActions);fillSelect($('failDefects'),cfg.failDefects);
+const cfg=await fetch('./data.json?v=274', {cache:'no-store'}).then(r=>r.json());
+setupAssetTypeFilter(cfg.assetTypes||[]);fillSelect($('advActions'),cfg.advisoryActions);fillSelect($('failDefects'),cfg.failDefects);
 ['cAdv','cFail','cLim'].forEach(id=>$(id).addEventListener('change',showBlocks));
 if($('assetDesignation')) $('assetDesignation').addEventListener('change',()=>{
   const wrap=$('assetDesignationOtherWrap');
