@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <!-- BUILD v1.2.27 designation-id-scroll<meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>ROTE Mobile Inspector (Offline)</title>
+  <link rel="manifest" href="manifest.webmanifest?v=27">
+  <link rel="stylesheet" href="styles.css?v=27">
+</head>
+<body>
+<header class="topbar">
+  <div class="title">
+    <div class="h1">ROTE Mobile Inspector</div>
+    <div class="sub">Offline-first • Copy/paste for SafetyCulture</div>
+  </div>
+  <div class="actions">
+    <button id="btnSave" class="btn">Save</button>
+    <button id="btnExport" class="btn">Export JSON</button>
+    <label class="btn ghost">
+      Import JSON
+      <input id="fileImport" type="file" accept="application/json" hidden>
+    </label>
+  </div>
+</header>
+
+<main class="container">
+  <section class="card">
+    <h2>Inspection details</h2>
+    <div class="grid2">
+      <label>Customer<input id="customer" type="text" placeholder="e.g., President Kennedy School"></label>
+      <label>Site<input id="site" type="text" placeholder="e.g., Barlow Theatre Oldbury"></label>
+      <label>Space<input id="space" type="text" placeholder="e.g., Theatre"></label>
+      <label>Date of inspection<input id="inspectionDate" type="text" placeholder="e.g., 18/02/2026">
+      <label>Report outcome
+        <select id="reportOutcome">
+          <option value=""></option>
+          <option>All Assets Passed.</option>
+          <option>All Assets Passed - With Advisories.</option>
+          <option>Some Assets Failed.</option>
+        </select>
+      </label></label>
+      <div class="row">
+        <button id="btnNew" class="btn danger">New inspection</button>
+        <button id="btnPrint" class="btn">Printable report</button>
+        <button id="btnWord" class="btn">Export Word</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="card" id="addAssetCard">
+    <h2>Add an asset</h2>
+
+    <div class="grid2">
+      <label>Asset ID<input id="assetId" type="text" inputmode="numeric" placeholder="e.g., 340776"></label>
+      <label>Customer Asset Designation
+        <select id="assetDesignation">
+        <option value=""></option>
+        <option>Stage Left</option>
+        <option>Stage Right</option>
+        <option>Centre Stage</option>
+        <option>Downstage</option>
+        <option>Downstage Left</option>
+        <option>Downstage Centre</option>
+        <option>Downstage Right</option>
+        <option>Upstage</option>
+        <option>Upstage Left</option>
+        <option>Upstage Centre</option>
+        <option>Upstage Right</option>
+        <option>Auditorium</option>
+        <option>Auditorium Left</option>
+        <option>Auditorium Centre</option>
+        <option>Auditorium Right</option>
+        <option>Auditorium Front</option>
+        <option>Auditorium Front Left</option>
+        <option>Auditorium Front Right</option>
+        <option>Auditorium Back</option>
+        <option>Auditorium Back Left</option>
+        <option>Auditorium Back Right</option>
+        <option>Other</option>
+        </select>
+      </label>
+      <label id="assetDesignationOtherWrap" class="hidden">Customer Asset Designation note<input id="assetDesignationOther" type="text" placeholder="Add note"></label>
+      <label>Customer Asset ID (if one exists)<input id="customerAssetId" type="text" placeholder="Customer reference / local asset ID"></label>
+      <label>Asset type
+        <input id="assetTypeInput" list="assetTypeList" placeholder="Start typing to filter…">
+        <datalist id="assetTypeList"></datalist>
+      </label>
+      <label class="span2">Notes<input id="typeNotes" type="text" placeholder="extra notes (optional)"></label>
+      <label class="span2">WLL / SWL / OWL<input id="loadInfo" type="text" placeholder="e.g., WLL 150kg, SWL 150kg UDL, OWL 15kg"></label>
+    </div>
+
+    <div class="conds">
+      <label class="chk"><input id="cPass" type="checkbox"> Pass</label>
+      <label class="chk"><input id="cFail" type="checkbox"> Fail</label>
+      <label class="chk"><input id="cAdv" type="checkbox"> Advisory</label>
+      <label class="chk"><input id="cLim" type="checkbox"> Limitation</label>
+    </div>
+
+    <div id="advBlock" class="subcard hidden">
+      <h3>Advisory</h3>
+      <label>Advisory Details
+        <select id="advActions" multiple size="6"></select>
+      </label>
+      <label class="span2">Previous (advisory details)<textarea id="prevAdv" rows="3" readonly placeholder="(from previous ROTE)"></textarea></label>
+      <label>Advisory notes<textarea id="advNotes" rows="3"></textarea></label>
+
+      <div class="checklist">
+        <div class="clTitle">Advisory / Fail checklist</div>
+        <label class="chk"><input id="chkGenericPhotos" type="checkbox"> Generic Photos of Structure/Equipment/System - One showing the whole asset and one showing the location of the barcode label.</label>
+        <label class="chk"><input id="chkFixingsPhotos" type="checkbox"> Photos of primary fixings, suspension and connection methods.</label>
+        <label class="chk"><input id="chkObsPhotos" type="checkbox"> Photos relating to failure/improvement observations.</label>
+        <label class="chk"><input id="chkRemedial" type="checkbox"> Please indicate details of remedial actions required (types/quantities of materials etc).</label>
+      </div>
+    </div>
+
+    <div id="failBlock" class="subcard hidden">
+      <h3>Fail</h3>
+      <label>Defects (multi-select)
+        <select id="failDefects" multiple size="8"></select>
+      </label>
+      <label class="span2">Previous (defects observed)<textarea id="prevFail" rows="3" readonly placeholder="(from previous ROTE)"></textarea></label>
+      <label id="failOtherWrap" class="hidden">Other (free text)<input id="failOther" type="text"></label>
+      <label>Fail notes<textarea id="failNotes" rows="3"></textarea></label>
+
+      <div class="checklist" id="failChecklistOnly">
+        <div class="clTitle">Advisory / Fail checklist</div>
+        <label class="chk"><input id="chkGenericPhotosF" type="checkbox"> Generic Photos of Structure/Equipment/System - One showing the whole asset and one showing the location of the barcode label.</label>
+        <label class="chk"><input id="chkFixingsPhotosF" type="checkbox"> Photos of primary fixings, suspension and connection methods.</label>
+        <label class="chk"><input id="chkObsPhotosF" type="checkbox"> Photos relating to failure/improvement observations.</label>
+        <label class="chk"><input id="chkRemedialF" type="checkbox"> Please indicate details of remedial actions required (types/quantities of materials etc).</label>
+      </div>
+    </div>
+
+    <div id="limBlock" class="subcard hidden">
+      <h3>Limitation</h3>
+      <label>Details of Limitation
+        <select id="limDetails">
+          <option value=""></option>
+          <option>Restricted access to primary fixings due to suspended ceiling</option>
+          <option>Restricted access to some primary fixings due to suspended ceiling</option>
+          <option>Restricted access to primary fixings due to fixed ceiling</option>
+          <option>Restricted access to some primary fixings due to fixed ceiling</option>
+          <option>Restricted access to primary fixings due to installed equipment</option>
+          <option>Restricted access to some primary fixings due to installed equipment</option>
+          <option>Restricted access to primary fixings due to HVAC System</option>
+          <option>Restricted access to some primary fixings due to HVAC System</option>
+          <option>Restricted access to primary fixings due to installed equipment and HVAC System</option>
+          <option>Restricted access to some primary fixings due to installed equipment and HVAC System</option>
+          <option>Restricted access to some primary fixings due to installed equipment and HVAC System</option>
+          <option>Other</option>
+        </select>
+      </label>
+      <label>Limitation notes<textarea id="limNotes" rows="3"></textarea></label>
+      <label class="span2">Previous (limitation details)<textarea id="prevLim" rows="3" readonly placeholder="(from previous ROTE)"></textarea></label>
+      <div class="checklist">
+        <div class="clTitle">Limitation checklist</div>
+        <label class="chk"><input id="chkLimDetails" type="checkbox"> Details of the limitation.</label>
+        <label class="chk"><input id="chkLimPhotos" type="checkbox"> Photos of limitation.</label>
+      </div>
+    </div>
+
+    <label>This inspection<textarea id="thisInspection" rows="3"></textarea></label>
+
+    <div class="row">
+      <button id="btnAddAsset" class="btn primary">Add asset</button>
+      <button id="btnCancelEdit" class="btn">Cancel edit</button>
+      <button id="btnClearAsset" class="btn ghost">Clear</button>
+    </div>
+    <div id="addMsg" class="msg"></div>
+  </section>
+
+  <section class="card">
+    <h2>Assets</h2>
+    <div id="progress" class="small" style="margin-bottom:8px"></div>
+    <div class="row">
+      <button id="btnSort" class="btn">Sort by Asset ID</button>
+      <button id="btnRenumber" class="btn">Renumber 1..n</button>
+    </div>
+    <div id="assetList"></div>
+  </section>
+
+  <section class="card">
+    <h2>Copy/paste block (SafetyCulture)</h2>
+    <div class="row">
+      <button id="btnBuildText" class="btn">Generate</button>
+      <button id="btnCopy" class="btn">Copy</button>
+    </div>
+    <textarea id="copyText" rows="16" class="mono" placeholder="Tap Generate…"></textarea>
+  </section>
+</main>
+
+  <div id="infoModal" class="modal hidden">
+    <div class="modalCard">
+      <div class="row" style="justify-content:space-between;align-items:center">
+        <div id="infoModalTitle" style="font-weight:800"></div>
+        <button id="infoModalClose" type="button" class="btn">Close</button>
+      </div>
+      <div id="infoModalBody" class="modalBody"></div>
+    </div>
+  </div>
+
+
+<script src="app.js?v=27"></script>
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js').catch(()=>{});
+  }
+</script>
+</body>
+</html>
