@@ -1,11 +1,11 @@
-const CACHE_NAME = 'rote-inspection-portal-v1-2-27-2';
+const CACHE_NAME = 'rote-inspection-portal-v1-2-27-3';
 const ASSETS = [
   './',
   './index.html',
-  './styles.css?v=272',
-  './app.js?v=272',
-  './data.json?v=272',
-  './manifest.webmanifest?v=272'
+  './styles.css?v=273',
+  './app.js?v=273',
+  './data.json?v=273',
+  './manifest.webmanifest?v=273'
 ];
 
 self.addEventListener('install', event => {

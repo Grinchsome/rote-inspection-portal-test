@@ -43,6 +43,28 @@ function fillDatalist(dl,items){dl.innerHTML="";for(const it of items){const o=d
 function showBlocks(){const adv=$('cAdv').checked, fail=$('cFail').checked, lim=$('cLim').checked;
 $('advBlock').classList.toggle('hidden',!adv);$('failBlock').classList.toggle('hidden',!fail);$('limBlock').classList.toggle('hidden',!lim);
 $('failChecklistOnly').classList.toggle('hidden',adv);}
+function setDesignationValue(value, note){
+  const sel=$('assetDesignation');
+  const other=$('assetDesignationOther');
+  const wrap=$('assetDesignationOtherWrap');
+  const v=String(value||'').trim();
+  const n=String(note||'').trim();
+  if(!sel) return;
+  const has=[...sel.options].some(o=>o.value===v);
+  if(v && has){
+    sel.value=v;
+    if(other) other.value=n;
+    if(wrap) wrap.classList.toggle('hidden', v !== 'Other');
+  }else if(v){
+    sel.value='Other';
+    if(other) other.value=n || v;
+    if(wrap) wrap.classList.remove('hidden');
+  }else{
+    sel.value='';
+    if(other) other.value=n;
+    if(wrap) wrap.classList.add('hidden');
+  }
+}
 function clearForm(){['assetId','assetDesignation','assetDesignationOther','customerAssetId','typeNotes','loadInfo','advNotes','failOther','failNotes','limDetails','limNotes','thisInspection','assetTypeInput'].forEach(id=>{const el=$(id); if(el) el.value='';});
 ['cPass','cFail','cAdv','cLim','chkGenericPhotos','chkFixingsPhotos','chkObsPhotos','chkRemedial','chkGenericPhotosF','chkFixingsPhotosF','chkObsPhotosF','chkRemedialF','chkLimDetails','chkLimPhotos'].forEach(id=>{const el=$(id); if(el) el.checked=false;});
 if($('advActions')) $('advActions').selectedIndex=-1;if($('failDefects')) $('failDefects').selectedIndex=-1;if($('failOtherWrap')) $('failOtherWrap').classList.add('hidden');if($('assetTypeInput')) $('assetTypeInput').value='';
@@ -112,10 +134,8 @@ host.querySelectorAll('[data-edit]').forEach(btn=>btn.addEventListener('click',(
   const a=data.records[i]; if(!a) return;
   editIndex = i;
   $('assetId').value = a.assetId||'';
-  if($('assetDesignation')) $('assetDesignation').value = a.assetDesignation||'';
-  if($('assetDesignationOther')) $('assetDesignationOther').value = a.assetDesignationOther||'';
+  setDesignationValue(a.assetDesignation||'', a.assetDesignationOther||'');
   if($('customerAssetId')) $('customerAssetId').value = a.customerAssetId||'';
-  if($('assetDesignationOtherWrap')) $('assetDesignationOtherWrap').classList.toggle('hidden', (a.assetDesignation||'') !== 'Other');
   $('assetTypeInput').value = a.assetType||'Other';
   $('typeNotes').value = a.typeNotes||'';
   if($('loadInfo')) $('loadInfo').value = a.loadInfo||'';
@@ -248,8 +268,8 @@ w.document.write(`<html><head><meta name="viewport" content="width=device-width,
 <div class="meta">Site: ${escapeHtml(m.site||"")}<br/>Space: ${escapeHtml(m.space||"")}${m.inspectionDate?("<br/>Report: "+escapeHtml(m.inspectionDate)):""}</div>${lines}
 <script>window.focus();</script></body></html>`);w.document.close();}
 async function init(){
-const cfg=await fetch('./data.json?v=272', {cache:'no-store'}).then(r=>r.json());
-fillSelect($('assetTypeInput'),[''].concat(cfg.assetTypes||[]));fillSelect($('advActions'),cfg.advisoryActions);fillSelect($('failDefects'),cfg.failDefects);
+const cfg=await fetch('./data.json?v=273', {cache:'no-store'}).then(r=>r.json());
+fillDatalist($('assetTypeList'),cfg.assetTypes||[]);fillSelect($('advActions'),cfg.advisoryActions);fillSelect($('failDefects'),cfg.failDefects);
 ['cAdv','cFail','cLim'].forEach(id=>$(id).addEventListener('change',showBlocks));
 if($('assetDesignation')) $('assetDesignation').addEventListener('change',()=>{
   const wrap=$('assetDesignationOtherWrap');
