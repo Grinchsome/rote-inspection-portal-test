@@ -138,7 +138,21 @@ function updateProgress(){
 }
 
 function render(){const host=$('assetList');host.innerHTML="";
-data.records.forEach((r,i)=>{const div=document.createElement('div');div.className='assetItem';div.setAttribute('data-asset-id', r.assetId || '');
+const q=(($('assetSearch')&&$('assetSearch').value)||'').toLowerCase().trim();
+let visibleCount=0;
+data.records.forEach((r,i)=>{
+const hay=[
+  r.assetNo,
+  r.origAssetNo,
+  r.assetId,
+  r.customerAssetId,
+  r.assetDesignation,
+  r.assetDesignationOther,
+  r.assetType
+].map(x=>String(x||'').toLowerCase()).join(' ');
+if(q && !hay.includes(q)) return;
+visibleCount++;
+const div=document.createElement('div');div.className='assetItem';div.setAttribute('data-asset-id', r.assetId || '');
 const conds=[];if(r.pass)conds.push('Pass');if(r.advisory)conds.push('Advisory');if(r.limitation)conds.push('Limitation');if(r.fail)conds.push('Fail');
 div.innerHTML=`<div class="assetHead"><div><div><strong>Asset ${r.assetNo||i+1}</strong> — ID ${escapeHtml(r.assetId||"")}${r.assetDesignation?(' — '+escapeHtml(r.assetDesignation)+(r.assetDesignationOther?' ('+escapeHtml(r.assetDesignationOther)+')':'')):''}${r.customerAssetId?(' — Customer Asset ID: '+escapeHtml(r.customerAssetId)):''} — ${escapeHtml(r.assetType||"")}</div>${r.typeNotes?`<div class="small">Notes: ${escapeHtml(r.typeNotes)}</div>`:""}</div>
 <div class="badges">${conds.map(badge).join("")}</div></div>
@@ -170,6 +184,12 @@ host.querySelectorAll('[data-info]').forEach(btn=>{
     save();
     updateProgress();
   }));
+
+const sc=$('searchCount');
+if(sc){
+  const total=data.records.length;
+  sc.textContent = q ? `Showing ${visibleCount} of ${total} assets` : (total ? `${total} assets loaded` : '');
+}
 
 host.querySelectorAll('[data-edit]').forEach(btn=>btn.addEventListener('click',()=>{
   const i=parseInt(btn.getAttribute('data-edit'),10);
@@ -310,7 +330,7 @@ w.document.write(`<html><head><meta name="viewport" content="width=device-width,
 <div class="meta">Site: ${escapeHtml(m.site||"")}<br/>Space: ${escapeHtml(m.space||"")}${m.inspectionDate?("<br/>Report: "+escapeHtml(m.inspectionDate)):""}</div>${lines}
 <script>window.focus();</script></body></html>`);w.document.close();}
 async function init(){
-const cfg=await fetch('./data.json?v=274', {cache:'no-store'}).then(r=>r.json());
+const cfg=await fetch('./data.json?v=28', {cache:'no-store'}).then(r=>r.json());
 setupAssetTypeFilter(cfg.assetTypes||[]);fillSelect($('advActions'),cfg.advisoryActions);fillSelect($('failDefects'),cfg.failDefects);
 ['cAdv','cFail','cLim'].forEach(id=>$(id).addEventListener('change',showBlocks));
 if($('assetDesignation')) $('assetDesignation').addEventListener('change',()=>{
@@ -319,6 +339,13 @@ if($('assetDesignation')) $('assetDesignation').addEventListener('change',()=>{
 });
 $('failDefects').addEventListener('change',()=>{const opts=selectedMulti($('failDefects')).map(s=>s.toLowerCase());
 $('failOtherWrap').classList.toggle('hidden',!opts.some(s=>s.startsWith('other')));});
+
+if($('assetSearch')) $('assetSearch').addEventListener('input',()=>render());
+if($('btnClearSearch')) $('btnClearSearch').addEventListener('click',()=>{
+  if($('assetSearch')) $('assetSearch').value='';
+  render();
+});
+
 
 $('btnAddAsset').addEventListener('click',()=>{
   const assetId = ($('assetId').value||'').trim();

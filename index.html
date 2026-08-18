@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <!-- BUILD v1.2.27.4 mobile-asset-type-filter -->
+  <!-- BUILD v1.2.28 asset-search -->
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>ROTE Mobile Inspector (Offline)</title>
@@ -53,7 +53,7 @@
 
     <div class="grid2">
       <label>Asset ID<input id="assetId" type="text" inputmode="numeric" placeholder="e.g., 340776"></label>
-      <label>Asset Location
+      <label>Customer Asset Designation
         <select id="assetDesignation">
         <option value=""></option>
         <option>Stage Left</option>
@@ -80,7 +80,7 @@
         <option>Other</option>
         </select>
       </label>
-      <label id="assetDesignationOtherWrap" class="hidden">Asset Location note<input id="assetDesignationOther" type="text" placeholder="Add note"></label>
+      <label id="assetDesignationOtherWrap" class="hidden">Customer Asset Designation note<input id="assetDesignationOther" type="text" placeholder="Add note"></label>
       <label>Customer Asset ID (if one exists)<input id="customerAssetId" type="text" placeholder="Customer reference / local asset ID"></label>
       <label class="assetTypeWrap">Asset type
         <input id="assetTypeInput" type="text" autocomplete="off" placeholder="Start typing to filter…">
@@ -173,6 +173,13 @@
   <section class="card">
     <h2>Assets</h2>
     <div id="progress" class="small" style="margin-bottom:8px"></div>
+    <div class="assetSearchBox">
+      <label class="span2">Search assets
+        <input id="assetSearch" type="search" inputmode="numeric" autocomplete="off" placeholder="Type Asset ID / asset number…">
+      </label>
+      <button id="btnClearSearch" class="btn ghost" type="button">Clear search</button>
+      <div id="searchCount" class="small"></div>
+    </div>
     <div class="row">
       <button id="btnSort" class="btn">Sort by Asset ID</button>
       <button id="btnRenumber" class="btn">Renumber 1..n</button>

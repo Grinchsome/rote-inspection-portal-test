@@ -99,3 +99,28 @@ body{
 .suggestItem:hover{
   background: rgba(255,255,255,.12);
 }
+
+
+/* Asset search */
+.assetSearchBox{
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:8px;
+  align-items:end;
+  margin:8px 0 12px;
+}
+.assetSearchBox label{
+  margin:0;
+}
+#searchCount{
+  grid-column:1 / -1;
+  min-height:1.2em;
+}
+@media (max-width:640px){
+  .assetSearchBox{
+    grid-template-columns:1fr;
+  }
+  #btnClearSearch{
+    width:100%;
+  }
+}
