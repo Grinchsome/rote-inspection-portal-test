@@ -10,6 +10,7 @@ function _asList(v){
 const $=(id)=>document.getElementById(id);
 let data={meta:{customer:"",site:"",space:"",inspectionDate:"",reportOutcome:""},records:[]};
 let editIndex = null;
+let showUninspectedOnly = false;
 
 let assetTypeOptions = [];
 function setupAssetTypeFilter(items){
@@ -113,7 +114,10 @@ if($('advActions')) $('advActions').selectedIndex=-1;if($('failDefects')) $('fai
 showBlocks();$('addMsg').textContent="";}
 function sortAssets(){data.records.sort((a,b)=>idKey(a.assetId)-idKey(b.assetId));}
 function renumber(){data.records.forEach((r,i)=>r.assetNo=i+1);}
-function badge(t){return `<span class="badge">${t}</span>`;}
+function badge(t){
+  const cls = String(t||'').toLowerCase();
+  return `<span class="badge badge-${cls}">${t}</span>`;
+}
 
 function showInfo(kind, text){
   const modal = $('infoModal');
@@ -151,13 +155,14 @@ const hay=[
   r.assetType
 ].map(x=>String(x||'').toLowerCase()).join(' ');
 if(q && !hay.includes(q)) return;
+if(showUninspectedOnly && r.inspected) return;
 visibleCount++;
 const div=document.createElement('div');div.className='assetItem';div.setAttribute('data-asset-id', r.assetId || '');
 const conds=[];if(r.pass)conds.push('Pass');if(r.advisory)conds.push('Advisory');if(r.limitation)conds.push('Limitation');if(r.fail)conds.push('Fail');
 div.innerHTML=`<div class="assetHead"><div><div><strong>Asset ${r.assetNo||i+1}</strong> — ID ${escapeHtml(r.assetId||"")}${r.assetDesignation?(' — '+escapeHtml(r.assetDesignation)+(r.assetDesignationOther?' ('+escapeHtml(r.assetDesignationOther)+')':'')):''}${r.customerAssetId?(' — Customer Asset ID: '+escapeHtml(r.customerAssetId)):''} — ${escapeHtml(r.assetType||"")}</div>${r.typeNotes?`<div class="small">Notes: ${escapeHtml(r.typeNotes)}</div>`:""}</div>
 <div class="badges">${conds.map(badge).join("")}</div></div>
 <div class="row" style="margin-top:10px"><label class="small" style="display:flex;align-items:center;gap:8px;margin-right:10px;"><input type="checkbox" data-inspected="${i}" ${r.inspected?"checked":""}> Inspected</label>
-        ${((r.prevAdv||(r.advActions&&r.advActions.length)||(r.improvements&&r.improvements.length)) || (r.prevFail||(r.failDefects&&r.failDefects.length)||(r.defects&&r.defects.length)) || (r.prevLim||r.limDetails||r.limNotes||(r.limitations&&r.limitations.length)))?`<div class=\"row noSelect\" style=\"gap:10px;flex-wrap:wrap;margin-top:6px\">${(r.prevAdv||(r.advActions&&r.advActions.length)||(r.improvements&&r.improvements.length))?`<button type=\"button\" class=\"tagBtn\" data-info=\"adv\" data-i=\"${i}\">View advisory</button>`:''}${(r.prevFail||(r.failDefects&&r.failDefects.length)||(r.defects&&r.defects.length))?`<button type=\"button\" class=\"tagBtn\" data-info=\"fail\" data-i=\"${i}\">View fail</button>`:''}${(r.prevLim||r.limDetails||r.limNotes||(r.limitations&&r.limitations.length))?`<button type=\"button\" class=\"tagBtn\" data-info=\"lim\" data-i=\"${i}\">View limitation</button>`:''}</div>`:''}
+        ${((r.prevAdv||(r.advActions&&r.advActions.length)||(r.improvements&&r.improvements.length)) || (r.prevFail||(r.failDefects&&r.failDefects.length)||(r.defects&&r.defects.length)) || (r.prevLim||r.limDetails||r.limNotes||(r.limitations&&r.limitations.length)))?`<div class=\"row noSelect\" style=\"gap:10px;flex-wrap:wrap;margin-top:6px\">${(r.prevAdv||(r.advActions&&r.advActions.length)||(r.improvements&&r.improvements.length))?`<button type=\"button\" class=\"tagBtn tagBtn-adv\" data-info=\"adv\" data-i=\"${i}\">View advisory</button>`:''}${(r.prevFail||(r.failDefects&&r.failDefects.length)||(r.defects&&r.defects.length))?`<button type=\"button\" class=\"tagBtn tagBtn-fail\" data-info=\"fail\" data-i=\"${i}\">View fail</button>`:''}${(r.prevLim||r.limDetails||r.limNotes||(r.limitations&&r.limitations.length))?`<button type=\"button\" class=\"tagBtn tagBtn-lim\" data-info=\"lim\" data-i=\"${i}\">View limitation</button>`:''}</div>`:''}
         <button class="btn" data-edit="${i}">Edit</button>
         <button class="btn danger" data-del="${i}">Delete</button></div>`;
 host.appendChild(div);});
@@ -183,12 +188,16 @@ host.querySelectorAll('[data-info]').forEach(btn=>{
     data.records[i].inspected = cb.checked;
     save();
     updateProgress();
+    if(showUninspectedOnly) render();
   }));
 
 const sc=$('searchCount');
 if(sc){
   const total=data.records.length;
-  sc.textContent = q ? `Showing ${visibleCount} of ${total} assets` : (total ? `${total} assets loaded` : '');
+  const filterParts=[];
+  if(q) filterParts.push('search');
+  if(showUninspectedOnly) filterParts.push('uninspected only');
+  sc.textContent = filterParts.length ? `Showing ${visibleCount} of ${total} assets (${filterParts.join(' + ')})` : (total ? `${total} assets loaded` : '');
 }
 
 host.querySelectorAll('[data-edit]').forEach(btn=>btn.addEventListener('click',()=>{
@@ -330,7 +339,7 @@ w.document.write(`<html><head><meta name="viewport" content="width=device-width,
 <div class="meta">Site: ${escapeHtml(m.site||"")}<br/>Space: ${escapeHtml(m.space||"")}${m.inspectionDate?("<br/>Report: "+escapeHtml(m.inspectionDate)):""}</div>${lines}
 <script>window.focus();</script></body></html>`);w.document.close();}
 async function init(){
-const cfg=await fetch('./data.json?v=28', {cache:'no-store'}).then(r=>r.json());
+const cfg=await fetch('./data.json?v=30', {cache:'no-store'}).then(r=>r.json());
 setupAssetTypeFilter(cfg.assetTypes||[]);fillSelect($('advActions'),cfg.advisoryActions);fillSelect($('failDefects'),cfg.failDefects);
 ['cAdv','cFail','cLim'].forEach(id=>$(id).addEventListener('change',showBlocks));
 if($('assetDesignation')) $('assetDesignation').addEventListener('change',()=>{
@@ -345,6 +354,14 @@ if($('btnClearSearch')) $('btnClearSearch').addEventListener('click',()=>{
   if($('assetSearch')) $('assetSearch').value='';
   render();
 });
+
+if($('btnShowUninspected')) $('btnShowUninspected').addEventListener('click',()=>{
+  showUninspectedOnly = !showUninspectedOnly;
+  $('btnShowUninspected').textContent = showUninspectedOnly ? 'Showing uninspected only' : 'Show uninspected only';
+  $('btnShowUninspected').classList.toggle('active', showUninspectedOnly);
+  render();
+});
+
 
 
 $('btnAddAsset').addEventListener('click',()=>{
