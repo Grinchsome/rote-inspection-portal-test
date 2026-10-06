@@ -1,18 +1,18 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <!-- BUILD v1.2.33 report-details -->
+  <!-- BUILD v1.2.34 report-details -->
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>ROTE Mobile Inspector (Offline)</title>
-  <link rel="manifest" href="manifest.webmanifest?v=33">
-  <link rel="stylesheet" href="styles.css?v=33">
+  <link rel="manifest" href="manifest.webmanifest?v=34">
+  <link rel="stylesheet" href="styles.css?v=34">
 </head>
 <body>
 <header class="topbar">
   <div class="title">
     <div class="h1">ROTE Mobile Inspector</div>
-    <div class="sub">v1.2.33 • Offline-first • Copy/paste for SafetyCulture</div>
+    <div class="sub">v1.2.34 • Offline-first • Copy/paste for SafetyCulture</div>
   </div>
   <div class="actions">
     <button id="btnSave" class="btn">Save</button>
@@ -97,7 +97,7 @@
         <div id="assetTypeSuggest" class="suggestBox hidden"></div>
       </label>
       <label>Manufacturer &amp; Model<input id="manufacturerModel" type="text" placeholder="e.g., Stage Electrics"></label>
-      <label>Previous inspection date for this asset (optional)<input id="assetPreviousInspectionDate" type="date"><span class="small">Leave blank to use the report date.</span></label>
+      <label>Previous inspection date for this asset (optional)<input id="assetPreviousInspectionDate" type="text" autocomplete="off" placeholder="DD/MM/YYYY"><span class="small">Leave blank to use the report date.</span></label>
       <label class="span2">Asset type / configuration notes<input id="typeNotes" type="text" placeholder="extra notes (optional)"></label>
       <label class="span2">WLL / SWL / OWL<input id="loadInfo" type="text" placeholder="e.g., WLL 150kg, SWL 150kg UDL, OWL 15kg"></label>
     </div>
@@ -222,7 +222,7 @@
   </div>
 
 
-<script src="app.js?v=33"></script>
+<script src="app.js?v=34"></script>
 <script>
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js').catch(()=>{});

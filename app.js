@@ -107,7 +107,7 @@ function save(){
   for(const [key] of assetQuestions)data.meta[key]=$(key).value;
   data.meta.allAssetsAddedConfirmed=$('assetsPreviouslyRecorded').value==='no' && $('allAssetsAddedConfirmed').checked;
   data.records.forEach(cleanInactiveFindings);
-  data.schemaVersion='1.2.33';data.meta.examinationIntervalMonths=12;
+  data.schemaVersion='1.2.34';data.meta.examinationIntervalMonths=12;
   localStorage.setItem('rote_mobile_inspector_v1',JSON.stringify(data));
 }
 function load(){
@@ -243,7 +243,7 @@ host.querySelectorAll('[data-edit]').forEach(btn=>btn.addEventListener('click',(
   $('assetTypeInput').value = a.assetType||'Other';
   $('typeNotes').value = a.typeNotes||'';
   $('manufacturerModel').value=a.manufacturerModel||'';
-  $('assetPreviousInspectionDate').value=dateISO(a.previousInspectionDate);
+  $('assetPreviousInspectionDate').value=a.previousInspectionDate||'';
   for(const key of ['chkGenericPhotos','chkFixingsPhotos','chkObsPhotos','chkRemedial','chkLimDetails','chkLimPhotos']){if($(key))$(key).checked=!!a[key];if($(key+'F'))$(key+'F').checked=!!a[key];}
   if($('loadInfo')) $('loadInfo').value = a.loadInfo||'';
   $('cPass').checked = !!a.pass;
@@ -391,7 +391,7 @@ w.document.write(`<html><head><meta name="viewport" content="width=device-width,
 <div class="meta">Site: ${escapeHtml(m.site||"")}<br/>Space: ${escapeHtml(m.space||"")}${m.inspectionDate?("<br/>Report: "+escapeHtml(m.inspectionDate)):""}</div>${lines}
 <script>window.focus();</script></body></html>`);w.document.close();}
 async function init(){
-const cfg=await fetch('./data.json?v=33', {cache:'no-store'}).then(r=>r.json());
+const cfg=await fetch('./data.json?v=34', {cache:'no-store'}).then(r=>r.json());
 setupAssetTypeFilter(cfg.assetTypes||[]);fillSelect($('advActions'),cfg.advisoryActions);fillSelect($('failDefects'),cfg.failDefects);
 ['cAdv','cFail','cLim'].forEach(id=>$(id).addEventListener('change',showBlocks));
 if($('assetDesignation')) $('assetDesignation').addEventListener('change',()=>{

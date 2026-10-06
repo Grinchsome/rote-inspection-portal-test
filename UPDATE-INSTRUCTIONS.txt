@@ -1,4 +1,4 @@
-Mobile ROTE Inspector v1.2.33
+Mobile ROTE Inspector v1.2.34
 
 WHAT CHANGED
 - Four short Asset details questions, once per inspection, initially unanswered.
@@ -15,7 +15,7 @@ UPDATE YOUR GITHUB APP
 3. Open the existing Mobile Inspector repository on GitHub.
 4. Upload the CONTENTS of this folder into the same location as the existing index.html. Replace existing files; do not upload the ZIP or create an extra enclosing folder.
 5. Commit the upload and allow GitHub Pages to finish publishing.
-6. Open the app online, then close and reopen it if necessary. Check the heading shows v1.2.33 before using it offline.
+6. Open the app online, then close and reopen it if necessary. Check the heading shows v1.2.34 before using it offline.
 
 Your existing device storage key is retained. Do not clear browser/app storage to update. Existing JSON files can still be imported; the new questions will be unanswered until you complete them.
 

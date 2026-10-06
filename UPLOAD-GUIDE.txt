@@ -1,4 +1,4 @@
-ROTE Mobile Inspector v1.2.33
+ROTE Mobile Inspector v1.2.34
 Prepared 16 September 2026
 
 UPLOAD TO YOUR EXISTING GITHUB PAGES REPOSITORY
@@ -11,7 +11,7 @@ UPLOAD TO YOUR EXISTING GITHUB PAGES REPOSITORY
 4. Include .nojekyll (the empty file whose name begins with a dot). Keep it
    in place if GitHub already has it.
 5. After GitHub Pages has updated, open the Inspector while online. Close and
-   reopen the installed app if needed. The top should show v1.2.33.
+   reopen the installed app if needed. The top should show v1.2.34.
 6. Import a saved JSON and check it before your next visit. Open the updated
    app online once before relying on it offline.
 
