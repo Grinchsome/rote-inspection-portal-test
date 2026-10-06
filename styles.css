@@ -169,3 +169,7 @@ body{
 .tagBtn-fail:active,.tagBtn-fail:hover{
   filter: brightness(1.15);
 }
+
+input[type=checkbox]{width:auto;flex-shrink:0} input[readonly]{opacity:.8} #exportReview{border-color:#f59e0b;scroll-margin-top:110px} .topbar{z-index:100} @media(max-width:520px){.topbar{position:static;flex-wrap:wrap}.actions{justify-content:flex-start}input,select,textarea{font-size:16px}}
+
+.historyTag{background:#eef1f4;color:#374151;border:1px solid #9ca3af;}

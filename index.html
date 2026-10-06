@@ -1,18 +1,18 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <!-- BUILD v1.2.31 dates-advisories -->
+  <!-- BUILD v1.2.33 report-details -->
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>ROTE Mobile Inspector (Offline)</title>
-  <link rel="manifest" href="manifest.webmanifest?v=274">
-  <link rel="stylesheet" href="styles.css?v=274">
+  <link rel="manifest" href="manifest.webmanifest?v=33">
+  <link rel="stylesheet" href="styles.css?v=33">
 </head>
 <body>
 <header class="topbar">
   <div class="title">
     <div class="h1">ROTE Mobile Inspector</div>
-    <div class="sub">Offline-first • Copy/paste for SafetyCulture</div>
+    <div class="sub">v1.2.33 • Offline-first • Copy/paste for SafetyCulture</div>
   </div>
   <div class="actions">
     <button id="btnSave" class="btn">Save</button>
@@ -31,7 +31,11 @@
       <label>Customer<input id="customer" type="text" placeholder="e.g., President Kennedy School"></label>
       <label>Site<input id="site" type="text" placeholder="e.g., Barlow Theatre Oldbury"></label>
       <label>Space<input id="space" type="text" placeholder="e.g., Theatre"></label>
-      <label>Date of inspection<input id="inspectionDate" type="text" inputmode="numeric" autocomplete="off" placeholder="DD/MM/YYYY">
+      <label>Inspection commenced on<input id="inspectionDate" type="text" autocomplete="off" placeholder="DD/MM/YYYY"></label>
+      <label>Latest date of next thorough examination<input id="nextExaminationDate" type="date" readonly><span class="small">12 months from commencement</span></label>
+      <label>Previous inspection date<input id="previousInspectionDate" type="date"><span class="small">Applies to all assets unless an asset has its own date.</span></label>
+      <label>Inspector company<input id="inspectorCompany" type="text" value="Stage Electrics"></label>
+      <label class="span2">Overall inspector comments (optional)<textarea id="inspectorComments" rows="3"></textarea></label>
       <label>Report outcome
         <select id="reportOutcome">
           <option value=""></option>
@@ -39,7 +43,7 @@
           <option>All Assets Passed - With Advisories.</option>
           <option>Some Assets Failed.</option>
         </select>
-      </label></label>
+      </label>
       <div class="row">
         <button id="btnNew" class="btn danger">New inspection</button>
         <button id="btnPrint" class="btn">Printable report</button>
@@ -47,6 +51,12 @@
       </div>
     </div>
   </section>
+
+<section class="card" id="assetDetailsCard"><h2>Asset details</h2><div class="grid2"><label>Have assets previously been recorded?<select id="assetsPreviouslyRecorded"><option value="">Choose…</option><option value="yes">Yes</option><option value="no">No</option></select></label>
+<label>Have existing assets been checked and photos/information updated?<select id="existingAssetsChecked"><option value="">Choose…</option><option value="yes">Yes</option><option value="no">No</option></select></label>
+<label>Any assets added since last visit?<select id="assetsAdded"><option value="">Choose…</option><option value="yes">Yes</option><option value="no">No</option></select></label>
+<label>Any assets removed since last visit?<select id="assetsRemoved"><option value="">Choose…</option><option value="yes">Yes</option><option value="no">No</option></select></label></div><div id="allAssetsAddedWrap" class="hidden"><label class="chk"><input type="checkbox" id="allAssetsAddedConfirmed"> All assets have been added to the Assets function.</label><p class="small">If you fail to do this as part of the inspection, you may be asked to return to site.</p></div></section>
+  <section class="card hidden" id="exportReview" aria-live="polite"><h2>Check before export</h2><ul id="exportIssues"></ul><p>You can export an unfinished inspection as a draft without losing your work.</p><div class="row"><button class="btn" id="btnExportDraft">Export draft JSON</button><button class="btn ghost" id="btnCloseReview">Back to inspection</button></div></section>
 
   <section class="card" id="addAssetCard">
     <h2>Add an asset</h2>
@@ -86,7 +96,9 @@
         <input id="assetTypeInput" type="text" autocomplete="off" placeholder="Start typing to filter…">
         <div id="assetTypeSuggest" class="suggestBox hidden"></div>
       </label>
-      <label class="span2">Notes<input id="typeNotes" type="text" placeholder="extra notes (optional)"></label>
+      <label>Manufacturer &amp; Model<input id="manufacturerModel" type="text" placeholder="e.g., Stage Electrics"></label>
+      <label>Previous inspection date for this asset (optional)<input id="assetPreviousInspectionDate" type="date"><span class="small">Leave blank to use the report date.</span></label>
+      <label class="span2">Asset type / configuration notes<input id="typeNotes" type="text" placeholder="extra notes (optional)"></label>
       <label class="span2">WLL / SWL / OWL<input id="loadInfo" type="text" placeholder="e.g., WLL 150kg, SWL 150kg UDL, OWL 15kg"></label>
     </div>
 
@@ -172,6 +184,7 @@
 
   <section class="card">
     <h2>Assets</h2>
+    <p class="small">Tick Inspected after dealing with the asset and recording its outcome, including a note if it could not be found.</p>
     <div id="progress" class="small" style="margin-bottom:8px"></div>
     <div class="assetSearchBox">
       <label class="span2">Search assets
@@ -209,7 +222,7 @@
   </div>
 
 
-<script src="app.js?v=274"></script>
+<script src="app.js?v=33"></script>
 <script>
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js').catch(()=>{});

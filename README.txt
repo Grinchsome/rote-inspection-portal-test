@@ -1,24 +1,57 @@
-ROTE Mobile Inspector (Offline PWA) – Android
+ROTE Mobile Inspector v1.2.33
+Prepared 16 September 2026
 
-This is a simple offline-first “app” that runs in your phone browser and can be installed to your home screen.
-It stores the inspection on the phone and generates:
-- Copy/paste block (SafetyCulture)
-- Printable report (use Android Print → Save as PDF)
+UPLOAD TO YOUR EXISTING GITHUB PAGES REPOSITORY
 
-How to run it without internet
-Android won’t run offline apps properly from file://, so you need a tiny local web server app (no admin needed).
+1. Export any current inspection as JSON and keep that copy before updating.
+2. Extract the ZIP on your computer.
+3. Upload the files INSIDE the extracted folder to the same repository folder
+   that currently contains index.html. Replace the matching files. Do not
+   upload the ZIP itself or put everything in an extra nested folder.
+4. Include .nojekyll (the empty file whose name begins with a dot). Keep it
+   in place if GitHub already has it.
+5. After GitHub Pages has updated, open the Inspector while online. Close and
+   reopen the installed app if needed. The top should show v1.2.33.
+6. Import a saved JSON and check it before your next visit. Open the updated
+   app online once before relying on it offline.
 
-Recommended (Play Store):
-- “Simple HTTP Server” (or any local server app)
+WHAT CHANGED
 
-Steps
-1) Unzip this folder on your phone (e.g., Downloads/ROTE_App)
-2) Open the local server app and point it at the unzipped folder
-3) Start server (it will show a local address like http://127.0.0.1:8080)
-4) Open that address in Chrome
-5) Chrome menu (⋮) → “Add to Home screen” (installs like an app)
-After that, it will work offline.
+- Full customer, site and space remain separate editable fields.
+- Inspection commencement date uses a date picker.
+- Next examination is calculated as 12 calendar months later (29 February
+  becomes 28 February in the following non-leap year).
+- Shared previous inspection date, with optional per-asset date override.
+- Dedicated Manufacturer & Model, separate from configuration notes.
+- Inspector company defaults to Stage Electrics; optional overall comments.
+- JSON export highlights missing report details, unticked assets and missing
+  findings. Export draft JSON remains available for unfinished work.
+- Existing search, uninspected filter, colour badges, Inspected ticks and
+  photo reminders retained. Editing preserves previous data and reminders.
+- New fields appear in JSON and in copy/print/Word output.
 
-Export/Import
-Use Export JSON to back up progress.
-Use Import JSON to restore it.
+EXISTING FILES
+
+Older JSON files remain usable. Information absent from an old file stays
+blank. Old type notes are NOT automatically moved into Manufacturer & Model:
+review them and move the manufacturer text when appropriate. A shortened name
+already present in an old JSON must still be corrected manually.
+
+The Inspected tick means you have dealt with the asset and recorded the
+outcome, including a note if it was not found. It does not by itself mean
+the asset was physically examined or passed.
+
+When importing an old report to start a NEW visit, check dates and Inspected
+ticks: this release preserves the values in the file to support resuming a
+completed/in-progress inspection. The PDF reader update is a separate step.
+
+Page 5 Failure/Advisory Details has not been added to the mobile app.
+Report numbers, signatures, photos and approval remain in SafetyCulture.
+
+VALIDATION
+
+Tested legacy Rambert JSON import (24 assets), date formats and leap years,
+new metadata and previous-date overrides through JSON round trip, copy output,
+export reminders, and browser asset entry/editing with the Inspected tick.
+GitHub deployment and Android installation have not been tested on your phone.
+No inspection/customer data is bundled in these website files.

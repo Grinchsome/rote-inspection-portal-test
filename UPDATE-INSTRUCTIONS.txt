@@ -1,0 +1,22 @@
+Mobile ROTE Inspector v1.2.33
+
+WHAT CHANGED
+- Four short Asset details questions, once per inspection, initially unanswered.
+- Answer No to 'Have assets previously been recorded?' to show:
+  'All assets have been added to the Assets function.'
+- Answers and confirmation are included in JSON and copy/Word/print output.
+- Export warns about unanswered questions or missing confirmation. Draft export remains available.
+- Previous advisory/fail/limitation buttons are clearly labelled as history. Current findings have separate buttons.
+- Inactive finding details are preserved as previous information and removed from current finding fields. Pass is not changed.
+
+UPDATE YOUR GITHUB APP
+1. Before updating, export any inspection you are working on as a JSON backup.
+2. Extract this ZIP.
+3. Open the existing Mobile Inspector repository on GitHub.
+4. Upload the CONTENTS of this folder into the same location as the existing index.html. Replace existing files; do not upload the ZIP or create an extra enclosing folder.
+5. Commit the upload and allow GitHub Pages to finish publishing.
+6. Open the app online, then close and reopen it if necessary. Check the heading shows v1.2.33 before using it offline.
+
+Your existing device storage key is retained. Do not clear browser/app storage to update. Existing JSON files can still be imported; the new questions will be unanswered until you complete them.
+
+The live GitHub app has not been changed by creating this package.

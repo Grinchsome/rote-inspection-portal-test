@@ -53,33 +53,66 @@ function setupAssetTypeFilter(items){
   input.addEventListener('blur', () => setTimeout(() => box.classList.add('hidden'), 220));
 }
 
-const escapeHtml=(s)=>String(s||"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
+const escapeHtml=(s)=>String(s||"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"','&quot;').replaceAll("'",'&#39;');
 const idKey=(v)=>{const m=String(v||"").match(/(\d+)/);return m?parseInt(m[1],10):1e12;};
 const selectedMulti=(sel)=>Array.from(sel.selectedOptions).map(o=>o.value);
+const metaFields=['customer','site','space','inspectionDate','nextExaminationDate','previousInspectionDate','reportOutcome','inspectorCompany','inspectorComments'];
+
+const assetQuestions=[["assetsPreviouslyRecorded","Have assets previously been recorded?"],["existingAssetsChecked","Have existing assets been checked and photos/information updated?"],["assetsAdded","Any assets added since last visit?"],["assetsRemoved","Any assets removed since last visit?"]];
+function showAssetConfirmation(){
+  const required=$('assetsPreviouslyRecorded').value==='no';
+  $('allAssetsAddedWrap').classList.toggle('hidden',!required);
+  if(!required)$('allAssetsAddedConfirmed').checked=false;
+}
+function populateAssetDetails(){
+  for(const [key] of assetQuestions)$(key).value=['yes','no'].includes(data.meta[key])?data.meta[key]:'';
+  $('allAssetsAddedConfirmed').checked=data.meta.allAssetsAddedConfirmed===true;
+  showAssetConfirmation();
+}
+function cleanInactiveFindings(r){
+  for(const [flag,previous,fields] of [['advisory','prevAdv',['advActions','advNotes','improvements']],['fail','prevFail',['failDefects','failOther','failNotes','defects']],['limitation','prevLim',['limDetails','limNotes','limitations']]]){
+    if(r[flag])continue;
+    const parts=[r[previous],...fields.flatMap(k=>Array.isArray(r[k])?r[k]:[r[k]])].filter(v=>String(v||'').trim());
+    r[previous]=[...new Set(parts)].join('\n');
+    for(const key of fields)r[key]=Array.isArray(r[key])?[]:'';
+  }
+  return r;
+}
+function findingButtons(r,i){
+  return [['adv','advisory','prevAdv','advisory'],['fail','fail','prevFail','fail'],['lim','limitation','prevLim','limitation']].map(([kind,flag,previous,label])=>
+    (r[previous] ? '<button type="button" class="tagBtn historyTag" data-info="'+kind+'" data-history="true" data-i="'+i+'">Previous '+label+'</button>' : '')+
+    (r[flag] ? '<button type="button" class="tagBtn tagBtn-'+kind+'" data-info="'+kind+'" data-i="'+i+'">Current '+label+'</button>' : '')
+  ).join('');
+}
+
+function dateISO(value){
+  const s=String(value||'').trim(); if(!s)return '';
+  let y,m,d, match;
+  if(match=s.match(/^(\d{4})-(\d{2})-(\d{2})$/)){[,y,m,d]=match;}
+  else if(match=s.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/)){[,d,m,y]=match;}
+  else {const months=['january','february','march','april','may','june','july','august','september','october','november','december'];match=s.toLowerCase().match(/^(\d{1,2}) ([a-z]+) (\d{4})$/);if(!match)return '';d=match[1];m=months.indexOf(match[2])+1;y=match[3];}
+  const dt=new Date(Date.UTC(+y,+m-1,+d));
+  return dt.getUTCFullYear()===+y&&dt.getUTCMonth()===+m-1&&dt.getUTCDate()===+d?dt.toISOString().slice(0,10):'';
+}
+function nextAnnual(value){const iso=dateISO(value);if(!iso)return '';const [y,m,d]=iso.split('-').map(Number);const day=Math.min(d,new Date(Date.UTC(y+1,m,0)).getUTCDate());return [y+1,String(m).padStart(2,'0'),String(day).padStart(2,'0')].join('-');}
+function populateMeta(){
+  data.meta={inspectorCompany:'Stage Electrics',...data.meta};
+  populateAssetDetails();
+  for(const id of metaFields){let value=data.meta[id]||'';if(id.includes('Date') && id!=='inspectionDate')value=dateISO(value);$(id).value=value;}
+  $('nextExaminationDate').value=nextAnnual($('inspectionDate').value);
+}
 function save(){
-  data.meta.customer = $('customer').value || "";
-  data.meta.site = $('site').value || "";
-  data.meta.space = $('space').value || "";
-  data.meta.inspectionDate = $('inspectionDate').value || "";
-  data.meta.reportOutcome = $('reportOutcome').value || "";
-  localStorage.setItem("rote_mobile_inspector_v1", JSON.stringify(data));
+  $('nextExaminationDate').value=nextAnnual($('inspectionDate').value);
+  for(const id of metaFields)data.meta[id]=$(id).value||'';
+  for(const [key] of assetQuestions)data.meta[key]=$(key).value;
+  data.meta.allAssetsAddedConfirmed=$('assetsPreviouslyRecorded').value==='no' && $('allAssetsAddedConfirmed').checked;
+  data.records.forEach(cleanInactiveFindings);
+  data.schemaVersion='1.2.33';data.meta.examinationIntervalMonths=12;
+  localStorage.setItem('rote_mobile_inspector_v1',JSON.stringify(data));
 }
 function load(){
-  try{
-    const raw = localStorage.getItem("rote_mobile_inspector_v1");
-    if(raw) data = JSON.parse(raw);
-  }catch(e){}
-  if(!data.meta) data.meta = {customer:"",site:"",space:"",inspectionDate:"",reportOutcome:""};
-  if(data.meta.inspectionDate && !data.meta.inspectionDate){ data.meta.inspectionDate = data.meta.inspectionDate; }
-  if(!('customer' in data.meta)) data.meta.customer = "";
-  if(!('inspectionDate' in data.meta)) data.meta.inspectionDate = "";
-  if(!('reportOutcome' in data.meta)) data.meta.reportOutcome = "";
-  $('customer').value = data.meta.customer || "";
-  $('site').value = data.meta.site || "";
-  $('space').value = data.meta.space || "";
-  $('inspectionDate').value = data.meta.inspectionDate || "";
-  $('reportOutcome').value = data.meta.reportOutcome || "";
-  render();
+  try{const raw=localStorage.getItem('rote_mobile_inspector_v1');if(raw){const parsed=JSON.parse(raw);if(parsed&&Array.isArray(parsed.records))data=parsed;}}catch(e){}
+  data.meta=data.meta||{};data.records.forEach(cleanInactiveFindings);populateMeta();render();updateProgress();
 }
 function fillSelect(sel,items){sel.innerHTML="";for(const it of items){const o=document.createElement("option");o.value=it;o.textContent=it;sel.appendChild(o);}}
 function fillDatalist(dl,items){dl.innerHTML="";for(const it of items){const o=document.createElement("option");o.value=it;dl.appendChild(o);}}
@@ -108,23 +141,24 @@ function setDesignationValue(value, note){
     if(wrap) wrap.classList.add('hidden');
   }
 }
-function clearForm(){['assetId','assetDesignation','assetDesignationOther','customerAssetId','typeNotes','loadInfo','advNotes','failOther','failNotes','limDetails','limNotes','thisInspection','assetTypeInput'].forEach(id=>{const el=$(id); if(el) el.value='';});
+function clearForm(){['prevAdv','prevFail','prevLim','assetId','assetDesignation','assetDesignationOther','customerAssetId','manufacturerModel','assetPreviousInspectionDate','typeNotes','loadInfo','advNotes','failOther','failNotes','limDetails','limNotes','thisInspection','assetTypeInput'].forEach(id=>{const el=$(id); if(el) el.value='';});
 ['cPass','cFail','cAdv','cLim','chkGenericPhotos','chkFixingsPhotos','chkObsPhotos','chkRemedial','chkGenericPhotosF','chkFixingsPhotosF','chkObsPhotosF','chkRemedialF','chkLimDetails','chkLimPhotos'].forEach(id=>{const el=$(id); if(el) el.checked=false;});
 if($('advActions')) $('advActions').selectedIndex=-1;if($('failDefects')) $('failDefects').selectedIndex=-1;if($('failOtherWrap')) $('failOtherWrap').classList.add('hidden');if($('assetTypeInput')) $('assetTypeInput').value='';if($('assetTypeSuggest')) $('assetTypeSuggest').classList.add('hidden');
 showBlocks();$('addMsg').textContent="";}
-function sortAssets(){data.records.sort((a,b)=>idKey(a.assetId)-idKey(b.assetId));}
+function sortAssets(){const editing=editIndex===null?null:data.records[editIndex];data.records.sort((a,b)=>idKey(a.assetId)-idKey(b.assetId));if(editing)editIndex=data.records.indexOf(editing);}
 function renumber(){data.records.forEach((r,i)=>r.assetNo=i+1);}
 function badge(t){
   const cls = String(t||'').toLowerCase();
   return `<span class="badge badge-${cls}">${t}</span>`;
 }
 
-function showInfo(kind, text){
+function showInfo(kind, text, history){
   const modal = $('infoModal');
   if(!modal) return;
   const titleEl = $('infoModalTitle');
   const bodyEl = $('infoModalBody');
-  const titles = {adv:'Advisory (previous)', fail:'Fail (previous)', lim:'Limitation (previous)'};
+  const prefix=history?'Previous ':'Current ';
+  const titles = {adv:prefix+'advisory', fail:prefix+'fail', lim:prefix+'limitation'};
   if(titleEl) titleEl.textContent = titles[kind] || 'Details';
   if(bodyEl) bodyEl.textContent = text || '';
   modal.classList.remove('hidden');
@@ -159,10 +193,10 @@ if(showUninspectedOnly && r.inspected) return;
 visibleCount++;
 const div=document.createElement('div');div.className='assetItem';div.setAttribute('data-asset-id', r.assetId || '');
 const conds=[];if(r.pass)conds.push('Pass');if(r.advisory)conds.push('Advisory');if(r.limitation)conds.push('Limitation');if(r.fail)conds.push('Fail');
-div.innerHTML=`<div class="assetHead"><div><div><strong>Asset ${r.assetNo||i+1}</strong> — ID ${escapeHtml(r.assetId||"")}${r.assetDesignation?(' — '+escapeHtml(r.assetDesignation)+(r.assetDesignationOther?' ('+escapeHtml(r.assetDesignationOther)+')':'')):''}${r.customerAssetId?(' — Customer Asset ID: '+escapeHtml(r.customerAssetId)):''} — ${escapeHtml(r.assetType||"")}</div>${r.typeNotes?`<div class="small">Notes: ${escapeHtml(r.typeNotes)}</div>`:""}</div>
+div.innerHTML=`<div class="assetHead"><div><div><strong>Asset ${r.assetNo||i+1}</strong> — ID ${escapeHtml(r.assetId||"")}${r.assetDesignation?(' — '+escapeHtml(r.assetDesignation)+(r.assetDesignationOther?' ('+escapeHtml(r.assetDesignationOther)+')':'')):''}${r.customerAssetId?(' — Customer Asset ID: '+escapeHtml(r.customerAssetId)):''} — ${escapeHtml(r.assetType||"")}</div>${r.manufacturerModel?`<div class="small">Manufacturer &amp; Model: ${escapeHtml(r.manufacturerModel)}</div>`:""}${r.previousInspectionDate?`<div class="small">Previous inspection: ${escapeHtml(r.previousInspectionDate)}</div>`:""}${r.typeNotes?`<div class="small">Notes: ${escapeHtml(r.typeNotes)}</div>`:""}</div>
 <div class="badges">${conds.map(badge).join("")}</div></div>
 <div class="row" style="margin-top:10px"><label class="small" style="display:flex;align-items:center;gap:8px;margin-right:10px;"><input type="checkbox" data-inspected="${i}" ${r.inspected?"checked":""}> Inspected</label>
-        ${((r.prevAdv||(r.advActions&&r.advActions.length)||(r.improvements&&r.improvements.length)) || (r.prevFail||(r.failDefects&&r.failDefects.length)||(r.defects&&r.defects.length)) || (r.prevLim||r.limDetails||r.limNotes||(r.limitations&&r.limitations.length)))?`<div class=\"row noSelect\" style=\"gap:10px;flex-wrap:wrap;margin-top:6px\">${(r.prevAdv||(r.advActions&&r.advActions.length)||(r.improvements&&r.improvements.length))?`<button type=\"button\" class=\"tagBtn tagBtn-adv\" data-info=\"adv\" data-i=\"${i}\">View advisory</button>`:''}${(r.prevFail||(r.failDefects&&r.failDefects.length)||(r.defects&&r.defects.length))?`<button type=\"button\" class=\"tagBtn tagBtn-fail\" data-info=\"fail\" data-i=\"${i}\">View fail</button>`:''}${(r.prevLim||r.limDetails||r.limNotes||(r.limitations&&r.limitations.length))?`<button type=\"button\" class=\"tagBtn tagBtn-lim\" data-info=\"lim\" data-i=\"${i}\">View limitation</button>`:''}</div>`:''}
+        ${findingButtons(r,i)}
         <button class="btn" data-edit="${i}">Edit</button>
         <button class="btn danger" data-del="${i}">Delete</button></div>`;
 host.appendChild(div);});
@@ -172,11 +206,10 @@ host.querySelectorAll('[data-info]').forEach(btn=>{
     const i=parseInt(btn.getAttribute('data-i'),10);
     const kind=btn.getAttribute('data-info');
     const a=data.records[i]; if(!a) return;
-    let msg='';
-    if(kind==='adv') msg = a.prevAdv || (a.advActions||[]).join('\n') || '';
-    if(kind==='fail') msg = a.prevFail || (a.failDefects||[]).join('\n') || '';
-    if(kind==='lim') msg = a.prevLim || a.limDetails || a.limNotes || (a.limitations||[]).join('\\n') || '';
-    showInfo(kind, msg || '(no details)');
+    const history=btn.getAttribute('data-history')==='true';
+    const fields={adv:['prevAdv','advActions','advNotes'],fail:['prevFail','failDefects','failOther','failNotes'],lim:['prevLim','limDetails','limNotes']}[kind];
+    const msg=history?a[fields[0]]:fields.slice(1).flatMap(k=>Array.isArray(a[k])?a[k]:[a[k]]).filter(Boolean).join('\n');
+    showInfo(kind, msg || '(no details)', history);
   };
   btn.addEventListener('click', open);
   btn.addEventListener('touchstart', open, {passive:false});
@@ -209,6 +242,9 @@ host.querySelectorAll('[data-edit]').forEach(btn=>btn.addEventListener('click',(
   if($('customerAssetId')) $('customerAssetId').value = a.customerAssetId||'';
   $('assetTypeInput').value = a.assetType||'Other';
   $('typeNotes').value = a.typeNotes||'';
+  $('manufacturerModel').value=a.manufacturerModel||'';
+  $('assetPreviousInspectionDate').value=dateISO(a.previousInspectionDate);
+  for(const key of ['chkGenericPhotos','chkFixingsPhotos','chkObsPhotos','chkRemedial','chkLimDetails','chkLimPhotos']){if($(key))$(key).checked=!!a[key];if($(key+'F'))$(key+'F').checked=!!a[key];}
   if($('loadInfo')) $('loadInfo').value = a.loadInfo||'';
   $('cPass').checked = !!a.pass;
   $('cFail').checked = !!a.fail;
@@ -217,14 +253,14 @@ host.querySelectorAll('[data-edit]').forEach(btn=>btn.addEventListener('click',(
   // restore multiselects
   if($('advActions')) Array.from($('advActions').options).forEach(o=>o.selected = (a.advActions||[]).includes(o.value));
   if($('advNotes')) $('advNotes').value = a.advNotes||'';
-  if($('prevAdv')) $('prevAdv').value = a.prevAdv || (a.advActions||[]).join('\n');
+  if($('prevAdv')) $('prevAdv').value = a.prevAdv || '';
   if($('failDefects')) Array.from($('failDefects').options).forEach(o=>o.selected = (a.failDefects||[]).includes(o.value));
   if($('failOther')) $('failOther').value = a.failOther||'';
   if($('failNotes')) $('failNotes').value = a.failNotes||'';
-  if($('prevFail')) $('prevFail').value = a.prevFail || (a.failDefects||[]).join('\n');
+  if($('prevFail')) $('prevFail').value = a.prevFail || '';
   if($('limDetails')) $('limDetails').value = a.limDetails || a.limitationDetails || '';
   if($('limNotes')) $('limNotes').value = a.limNotes||'';
-  if($('prevLim')) $('prevLim').value = a.prevLim || a.limNotes || '';
+  if($('prevLim')) $('prevLim').value = a.prevLim || '';
   if($('thisInspection')) $('thisInspection').value = a.thisInspection||'';
   $('btnAddAsset').textContent = 'Update asset';
   $('btnCancelEdit').style.display = '';
@@ -235,11 +271,21 @@ function buildCopy(){sortAssets();renumber();save();
 const m=data.meta, lines=[];
 lines.push(`Site: ${m.site||""}`.trim());lines.push(`Space: ${m.space||""}`.trim());if(m.customer)lines.push(`Customer: ${m.customer}`.trim());
 if(m.inspectionDate)lines.push(`Date of inspection: ${m.inspectionDate}`.trim());
+if(m.nextExaminationDate)lines.push('Next thorough examination: '+m.nextExaminationDate);
+if(m.previousInspectionDate)lines.push('Previous inspection date: '+m.previousInspectionDate);
+if(m.inspectorCompany)lines.push('Inspector company: '+m.inspectorCompany);
+if(m.inspectorComments)lines.push('Inspector comments: '+m.inspectorComments);
 if(m.reportOutcome)lines.push(`Report outcome: ${m.reportOutcome}`.trim());lines.push("");
+for(const [key,label] of assetQuestions)lines.push(label+' '+(m[key]==='yes'?'Yes':m[key]==='no'?'No':'Not answered'));
+if(m.assetsPreviouslyRecorded==='no')lines.push('All assets have been added to the Assets function: '+(m.allAssetsAddedConfirmed?'Confirmed':'Not confirmed'));
+lines.push('');
 for(const r of data.records){
 lines.push(`Asset ${r.assetNo} — ID ${r.assetId}${r.assetDesignation?(' — '+r.assetDesignation):''}${r.assetDesignationOther?(' ('+r.assetDesignationOther+')'):''}${r.customerAssetId?(' — Customer Asset ID: '+r.customerAssetId):''} — ${r.assetType}`.trim());
 const c=[];if(r.pass)c.push("Pass");if(r.advisory)c.push("Advisory");if(r.limitation)c.push("Limitation");if(r.fail)c.push("Fail");
 lines.push(`Condition: ${c.join(" + ")}`.trim());
+if(r.manufacturerModel)lines.push('Manufacturer & Model: '+r.manufacturerModel);
+if(r.previousInspectionDate||m.previousInspectionDate)lines.push('Previous inspection date: '+(r.previousInspectionDate||m.previousInspectionDate));
+lines.push('Inspected tick: '+(r.inspected?'Yes — outcome recorded':'No — not yet confirmed'));
 if(r.typeNotes)lines.push(`Notes: ${r.typeNotes}`);
 if(r.loadInfo)lines.push(`Loads: ${r.loadInfo}`);
 if(r.limitation){if(r.limDetails)lines.push(`Details of limitation: ${r.limDetails}`);
@@ -263,7 +309,22 @@ lines.push(`[${r.chkRemedial?'x':' '}] Please indicate details of remedial actio
 if(r.thisInspection)lines.push("This inspection: "+r.thisInspection);
 lines.push("");}
 $('copyText').value=lines.join("\n");}
-function exportJSON(){save();const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+function exportIssues(){
+ const issues=[];
+ for(const [key,label] of assetQuestions)if(!['yes','no'].includes(data.meta[key]))issues.push('Asset details: '+label+' — choose Yes or No.');
+ if(data.meta.assetsPreviouslyRecorded==='no' && data.meta.allAssetsAddedConfirmed!==true)issues.push('Confirm all assets have been added to the Assets function.');
+ if(data.meta.existingAssetsChecked==='no')issues.push('Existing asset records/photos have not been confirmed as checked.');
+ for(const [key,label] of [['customer','Customer'],['site','Site'],['space','Space'],['inspectionDate','Inspection date'],['reportOutcome','Report outcome']])if(!data.meta[key])issues.push(label+' is missing.');
+ if(!data.records.length)issues.push('No assets recorded.');
+ if(editIndex!==null)issues.push('An asset is being edited. Update the asset to include those changes.');
+ data.records.forEach((r,i)=>{const label='Asset '+(r.assetNo||i+1)+' ('+(r.assetId||'no ID')+')';if(!r.inspected)issues.push(label+' is not ticked.');if(!r.assetId||!r.assetType)issues.push(label+' needs its ID and type.');if(!r.pass&&!r.fail&&!r.advisory&&!r.limitation&&!r.thisInspection)issues.push(label+' has no outcome or explanatory note.');if(r.pass&&r.fail)issues.push(label+' has both Pass and Fail selected.');for(const [flag,details] of [['advisory',[...(r.advActions||[]),r.advNotes]],['fail',[...(r.failDefects||[]),r.failOther,r.failNotes]],['limitation',[r.limDetails,r.limNotes]]])if(r[flag]&&!details.some(v=>String(v||'').trim()))issues.push(label+' needs '+flag+' details.');});
+ const out=data.meta.reportOutcome||'';
+ if(data.records.some(r=>r.fail)&&!out.startsWith('Some Assets Failed'))issues.push('Report outcome does not match the failed assets.');
+ if(!data.records.some(r=>r.fail)&&data.records.some(r=>r.advisory)&&out==='All Assets Passed.')issues.push('Report outcome does not mention the advisories.');
+ return issues;
+}
+function exportJSON(){save();const issues=exportIssues();if(issues.length){$('exportIssues').replaceChildren(...issues.map(t=>{const li=document.createElement('li');li.textContent=t;return li;}));$('exportReview').classList.remove('hidden');$('exportReview').scrollIntoView({behavior:'smooth'});return;}downloadJSON();}
+function downloadJSON(){save();const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
 const a=document.createElement('a');a.href=URL.createObjectURL(blob);
 a.download=`${(data.meta.site||"inspection").replaceAll(" ","_")}-inspection.json`;a.click();URL.revokeObjectURL(a.href);}
 function importJSON(file){
@@ -271,39 +332,30 @@ function importJSON(file){
   rd.onload=()=>{
     try{
       const obj=JSON.parse(rd.result);
-      if(obj && obj.records){
-        // merge meta into current fields (some exporters use different key names)
-        if(obj.meta){
-          const om=obj.meta;
-          data.meta = data.meta || {};
-          data.meta.customer = om.customer || om.Customer || '';
-          data.meta.site = om.site || om.site_and_space || om.siteAndSpace || '';
-          data.meta.space = om.space || '';
-          data.meta.inspectionDate = om.inspectionDate || om.date || om.reportDate || '';
-          data.meta.reportOutcome = om.reportOutcome || om.report_outcome || om.outcome || '';
-          if($('customer')) $('customer').value = data.meta.customer;
-          if($('site')) $('site').value = data.meta.site;
-          if($('space')) $('space').value = data.meta.space;
-          if($('inspectionDate')) $('inspectionDate').value = data.meta.inspectionDate;
-          if($('reportOutcome')) $('reportOutcome').value = data.meta.reportOutcome;
-        }
+      if(obj && Array.isArray(obj.records)){
+        const om=obj.meta||{};
+        data.meta={...om,customer:om.customer||om.Customer||'',site:om.site||om.site_and_space||om.siteAndSpace||'',space:om.space||'',inspectionDate:om.inspectionDate||om.date||om.reportDate||'',reportOutcome:om.reportOutcome||om.report_outcome||om.outcome||'',inspectorCompany:om.inspectorCompany||'Stage Electrics'};
+        if(data.meta.reportOutcome&&!data.meta.reportOutcome.endsWith('.'))data.meta.reportOutcome+='.';
+        populateMeta();
         // ensure per-record fields exist
         data.records = (obj.records||[]).map(r=>{
           const rr = {inspected:false,
       prevAdv:'',prevFail:'',prevLim:'', ...r};
-          rr.prevAdv = rr.prevAdv || rr.advDetails || rr.advisoryDetails || (rr.advActions && rr.advActions.length ? rr.advActions.join('\\n') : '') || (rr.improvements && rr.improvements.length ? rr.improvements.join('\\n') : '') || '';
-          rr.prevFail = rr.prevFail || rr.failDetails || rr.defectDetails || (rr.failDefects && rr.failDefects.length ? rr.failDefects.join('\\n') : '') || (rr.defects && rr.defects.length ? rr.defects.join('\\n') : '') || '';
+          rr.prevAdv = rr.prevAdv || rr.advDetails || rr.advisoryDetails || ''; 
+          rr.prevFail = rr.prevFail || rr.failDetails || rr.defectDetails || ''; 
           rr.assetDesignationOther = rr.assetDesignationOther || '';
           rr.customerAssetId = rr.customerAssetId || '';
           rr.limDetails = rr.limDetails || rr.limitationDetails || '';
-          rr.prevLim = rr.prevLim || rr.limDetails || rr.limitationDetails || (rr.limNotes ? rr.limNotes : '') || (rr.limitations && rr.limitations.length ? rr.limitations.join('\\n') : '') || '';
-          return rr;
+          rr.prevLim = rr.prevLim || ''; 
+          return cleanInactiveFindings(rr);
         });
+        editIndex=null;clearForm();$('btnAddAsset').textContent='Add asset';$('exportReview').classList.add('hidden');
         save();
         if($('btnCancelEdit')) $('btnCancelEdit').style.display='none';
         sortAssets(); renumber(); render(); updateProgress();
       }
-    }catch(e){}
+      else {throw new Error("Missing asset records");}
+    }catch(e){alert("Could not import this JSON. Please check the file.");}
   };
   rd.readAsText(file);
 }
@@ -339,7 +391,7 @@ w.document.write(`<html><head><meta name="viewport" content="width=device-width,
 <div class="meta">Site: ${escapeHtml(m.site||"")}<br/>Space: ${escapeHtml(m.space||"")}${m.inspectionDate?("<br/>Report: "+escapeHtml(m.inspectionDate)):""}</div>${lines}
 <script>window.focus();</script></body></html>`);w.document.close();}
 async function init(){
-const cfg=await fetch('./data.json?v=31', {cache:'no-store'}).then(r=>r.json());
+const cfg=await fetch('./data.json?v=33', {cache:'no-store'}).then(r=>r.json());
 setupAssetTypeFilter(cfg.assetTypes||[]);fillSelect($('advActions'),cfg.advisoryActions);fillSelect($('failDefects'),cfg.failDefects);
 ['cAdv','cFail','cLim'].forEach(id=>$(id).addEventListener('change',showBlocks));
 if($('assetDesignation')) $('assetDesignation').addEventListener('change',()=>{
@@ -378,6 +430,8 @@ $('btnAddAsset').addEventListener('click',()=>{
     assetDesignationOther: ($('assetDesignationOther').value||'').trim(),
     customerAssetId: ($('customerAssetId').value||'').trim(),
     assetType: ($('assetTypeInput').value||'Other'),
+    manufacturerModel: $('manufacturerModel').value.trim(),
+    previousInspectionDate: $('assetPreviousInspectionDate').value,
     typeNotes: ($('typeNotes').value||'').trim(),
     loadInfo: ($('loadInfo').value||'').trim(),
     pass: $('cPass').checked,
@@ -393,10 +447,10 @@ $('btnAddAsset').addEventListener('click',()=>{
     limNotes: ($('limNotes').value||'').trim(),
     thisInspection: ($('thisInspection').value||'').trim(),
     // checklists (stored but may be excluded from export in this branch if your v1_2 config does)
-    chkGenericPhotos: $('chkGenericPhotos')?$('chkGenericPhotos').checked:false,
-    chkFixingsPhotos: $('chkFixingsPhotos')?$('chkFixingsPhotos').checked:false,
-    chkObsPhotos: $('chkObsPhotos')?$('chkObsPhotos').checked:false,
-    chkRemedial: $('chkRemedial')?$('chkRemedial').checked:false,
+    chkGenericPhotos: $('cAdv').checked ? $('chkGenericPhotos').checked : $('chkGenericPhotosF').checked,
+    chkFixingsPhotos: $('cAdv').checked ? $('chkFixingsPhotos').checked : $('chkFixingsPhotosF').checked,
+    chkObsPhotos: $('cAdv').checked ? $('chkObsPhotos').checked : $('chkObsPhotosF').checked,
+    chkRemedial: $('cAdv').checked ? $('chkRemedial').checked : $('chkRemedialF').checked,
     chkLimDetails: $('chkLimDetails')?$('chkLimDetails').checked:false,
     chkLimPhotos: $('chkLimPhotos')?$('chkLimPhotos').checked:false
   };
@@ -405,7 +459,7 @@ $('btnAddAsset').addEventListener('click',()=>{
   if(editIndex !== null){
     // Preserve original index record replacement
     r.inspected = (data.records[editIndex] && typeof data.records[editIndex].inspected === 'boolean') ? data.records[editIndex].inspected : false;
-    data.records[editIndex] = r;
+    data.records[editIndex] = {...data.records[editIndex],...r};
     scrollToAssetId = r.assetId;
     editIndex = null;
     $('btnAddAsset').textContent = 'Add asset';
@@ -436,18 +490,21 @@ $('btnCancelEdit').addEventListener('click',()=>{
 });
 $('btnSave').addEventListener('click',()=>{save();$('addMsg').textContent="Saved.";setTimeout(()=>{$('addMsg').textContent="";},700);});
 $('btnExport').addEventListener('click',exportJSON);
+$('btnExportDraft').addEventListener('click',downloadJSON);
+$('btnCloseReview').addEventListener('click',()=>$('exportReview').classList.add('hidden'));
 $('fileImport').addEventListener('change',(e)=>{if(e.target.files?.[0])importJSON(e.target.files[0]);});
 $('btnBuildText').addEventListener('click',buildCopy);
 $('btnCopy').addEventListener('click',async ()=>{buildCopy();try{await navigator.clipboard.writeText($('copyText').value);}catch(e){}});
 $('btnSort').addEventListener('click',()=>{sortAssets();save();render();});
 $('btnRenumber').addEventListener('click',()=>{renumber();save();render();});
-$('btnNew').addEventListener('click',()=>{if(confirm("Start a new inspection? This clears all assets on this device.")){data={meta:{site:"",space:"",inspectionDate:""},records:[]};save();$('btnCancelEdit').style.display='none';
+$('btnNew').addEventListener('click',()=>{if(confirm("Start a new inspection? This clears all assets on this device.")){data={meta:{inspectorCompany:'Stage Electrics'},records:[]};editIndex=null;populateMeta();save();$('btnAddAsset').textContent='Add asset';$('btnCancelEdit').style.display='none';
 load();clearForm();}});
 $('btnPrint').addEventListener('click',printable);
 $('btnWord').addEventListener('click',exportWord);
-['customer','site','space','inspectionDate','reportOutcome'].forEach(id=>$(id).addEventListener('input',save));
+metaFields.forEach(id=>$(id).addEventListener('input',save));
+assetQuestions.forEach(([key])=>$(key).addEventListener('change',()=>{showAssetConfirmation();save();}));
+$('allAssetsAddedConfirmed').addEventListener('change',save);
 $('btnCancelEdit').style.display='none';
 load();clearForm();showBlocks();}
 init();
 try{$('infoModalClose').addEventListener('click',hideInfo);$('infoModal').addEventListener('click',(ev)=>{if(ev.target && ev.target.id==='infoModal') hideInfo();});}catch(e){}
-
